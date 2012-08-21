@@ -5,6 +5,7 @@ from apscheduler.scheduler import Scheduler
 import time
 import psutil
 import logging
+import socket, os
 #logging.basicConfig()
 logging.basicConfig(level=logging.INFO,
                     format='%(asctime)s %(name)-12s %(levelname)-8s %(message)s',
@@ -46,17 +47,27 @@ class ProcessTracker:
 		for metric in results.keys():
 			logging.info("%s.%s\t%s\t%d" % (self.pidnames[pid], metric, results[metric], time.time()))
 def main():
-  pt = ProcessTracker()
-
-  time.sleep(2)
-  pt.track('5822', 'process1')
-  time.sleep(3)
-  pt.track('425', 'process2')
-  time.sleep(2)
-  pt.untrack('5822')
-  time.sleep(2)
-  pt.untrack('666')
-  time.sleep(2)
+	pt = ProcessTracker()
+	pt.track('5822', 'process1')
+	pt.track('425', 'process2')
+	s = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+	try:
+		os.remove("/tmp/socketname")
+	except OSError:
+		pass
+	s.bind("/tmp/socketname")
+	s.listen(1)
+	conn, addr = s.accept()
+	while 1:
+		data = conn.recv(1024)
+		if not data: break
+		# TODO: better cmd parser logic
+		command, pid, name = data.split(' ')
+		if command == 'track':
+			pt.track(pid, name)
+		if command == 'untrack':
+			pt.untrack(pid)
+	conn.close()
 
 if __name__ == "__main__":
   main()
