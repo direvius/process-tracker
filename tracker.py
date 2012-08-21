@@ -48,25 +48,26 @@ class ProcessTracker:
 			logging.info("%s.%s\t%s\t%d" % (self.pidnames[pid], metric, results[metric], time.time()))
 def main():
 	pt = ProcessTracker()
-	pt.track('5822', 'process1')
-	pt.track('425', 'process2')
-	s = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-	try:
-		os.remove("/tmp/socketname")
-	except OSError:
-		pass
-	s.bind("/tmp/socketname")
+	s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+	s.bind(("0.0.0.0",6666))
 	s.listen(1)
 	conn, addr = s.accept()
 	while 1:
 		data = conn.recv(1024)
 		if not data: break
 		# TODO: better cmd parser logic
-		command, pid, name = data.split(' ')
-		if command == 'track':
-			pt.track(pid, name)
-		if command == 'untrack':
-			pt.untrack(pid)
+		try:
+			command, pid, name = data.rstrip('\r\n').split(' ')
+			if command == 'track':
+				pt.track(pid, name)
+				conn.sendall('OK\n')
+			elif command == 'untrack':
+				pt.untrack(pid)
+				conn.sendall('OK\n')
+			else:
+				conn.sendall('FAIL\n')
+		except ValueError:
+			conn.sendall('FAIL\n**USAGE:\n\ttrack <pid> <key> -- to start tracking pid\n\tuntrack <pid> -- to stop tracking pid\n')
 	conn.close()
 
 if __name__ == "__main__":
