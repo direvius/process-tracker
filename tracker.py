@@ -61,18 +61,19 @@ def main():
 		if not data: break
 		# TODO: better cmd parser logic
 		# TODO: multithreaded managing console
-		try:
-			command, pid, name = data.rstrip('\r\n').split(' ')
-			if command == 'track':
-				tm.track(pid, name)
-				conn.sendall('OK\n')
-			elif command == 'untrack':
-				tm.untrack(pid)
-				conn.sendall('OK %s\n' % data.rstrip('\r\n'))
-			else:
-				conn.sendall('FAIL %s\n' % data.rstrip('\r\n'))
-		except ValueError:
-			conn.sendall('FAIL %s\n**USAGE:\n\ttrack <pid> <key> -- to start tracking pid\n\tuntrack <pid> -- to stop tracking pid\n' % data.rstrip('\r\n'))
+		for line in data.split('\n'):
+			try:
+				command, pid, name = data.rstrip('\r\n').split(' ')
+				if command == 'track':
+					tm.track(pid, name)
+					conn.sendall('OK\n')
+				elif command == 'untrack':
+					tm.untrack(pid)
+					conn.sendall('OK %s\n' % data.rstrip('\r\n'))
+				else:
+					conn.sendall('FAIL %s\n' % data.rstrip('\r\n'))
+			except ValueError:
+				conn.sendall('FAIL %s\n**USAGE:\n\ttrack <pid> <key> -- to start tracking pid\n\tuntrack <pid> -- to stop tracking pid\n' % data.rstrip('\r\n'))
 	conn.close()
 
 if __name__ == "__main__":
