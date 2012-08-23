@@ -10,8 +10,8 @@ import socket, os
 logging.basicConfig(level=logging.INFO,
                     format='%(asctime)s %(name)-12s %(levelname)-8s %(message)s',
                     datefmt='%m-%d %H:%M',
-#                    filename=opts.log,
-#                    filemode='w'
+                    filename='stats.log',
+                    filemode='w'
 					)
 class ProcessTracker:
 	def __init__(self):
@@ -63,11 +63,11 @@ def main():
 				conn.sendall('OK\n')
 			elif command == 'untrack':
 				pt.untrack(pid)
-				conn.sendall('OK\n')
+				conn.sendall('OK %s\n' % data.rstrip('\r\n'))
 			else:
-				conn.sendall('FAIL\n')
+				conn.sendall('FAIL %s\n' % data.rstrip('\r\n'))
 		except ValueError:
-			conn.sendall('FAIL\n**USAGE:\n\ttrack <pid> <key> -- to start tracking pid\n\tuntrack <pid> -- to stop tracking pid\n')
+			conn.sendall('FAIL %s\n**USAGE:\n\ttrack <pid> <key> -- to start tracking pid\n\tuntrack <pid> -- to stop tracking pid\n' % data.rstrip('\r\n'))
 	conn.close()
 
 if __name__ == "__main__":
