@@ -15,7 +15,7 @@ logging.basicConfig(level=logging.INFO,
                     filemode='w'
 					)
 
-class ProcessTracker:
+class Collector:
 	def __init__(self, pid, name):
 		self.process = psutil.Process(int(pid))
 		self.name = name
@@ -41,7 +41,7 @@ class TrackerManager:
 	def track(self, pid, name):
 		logging.info("Start tracking for %s/%s", pid, name)
 		try:	
-			p = ProcessTracker(pid, name)
+			p = Collector(pid, name)
 			self.pids[pid] = p
 		except psutil.NoSuchProcess:
 			logging.exception("No such process")
