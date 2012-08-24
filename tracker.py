@@ -46,8 +46,8 @@ class TrackerManager:
 		except psutil.NoSuchProcess:
 			logging.exception("No such process")
 	def untrack(self, pid):
+		logging.info("Stop tracking for %s/%s", pid, self.pids[pid].name)
 		try:
-			logging.info("Stop tracking for %s/%s", pid, self.pids[pid].name)
 			del self.pids[pid]
 		except KeyError:
 			logging.warning("PID %s was not tracked" % pid)
@@ -96,14 +96,14 @@ def main():
 				command, pid, name = req.split(' ')
 				if command == 'track':
 					tm.track(pid, name)
-					conn.sendall('OK\n')
+					conn.sendall('OK %s\n' % req)
 				elif command == 'untrack':
 					tm.untrack(pid)
 					conn.sendall('OK %s\n' % req)
 				else:
 					conn.sendall('FAIL %s\n' % req)
 			except ValueError:
-				conn.sendall('FAIL (%s)\n**USAGE:\n\ttrack <pid> <key> -- to start tracking pid\n\tuntrack <pid> <key> -- to stop tracking pid\n' % req)
+				conn.sendall('FAIL %s\n**USAGE:\n\ttrack <pid> <key> -- to start tracking pid\n\tuntrack <pid> <key> -- to stop tracking pid\n' % req)
 	conn.close()
 if __name__ == "__main__":
 	main()
