@@ -22,7 +22,7 @@ class ProcessTracker:
 		results = {}
 		try:
 			p = self.process
-			results["%s.cpu.pct"%self.name] = p.get_cpu_percent(0)
+			#results["%s.cpu.pct"%self.name] = p.get_cpu_percent(0)
 			results["%s.cpu.usr"%self.name], results["%s.cpu.sys"%self.name] = p.get_cpu_times()
 			results["%s.csw.voluntary"%self.name], results["%s.csw.involuntary"%self.name] = p.get_num_ctx_switches()
 		except psutil.NoSuchProcess:
