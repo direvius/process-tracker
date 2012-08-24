@@ -37,7 +37,7 @@ class TrackerManager:
 		self.scheduler.add_interval_job(self.tracking_job, seconds=1)
 		self.scheduler.start()
 	def add_listener(self, listener):
-		self.listeners.add(listener)
+		self.listeners.append(listener)
 	def track(self, pid, name):
 		logging.info("Start tracking for %s/%s", pid, name)
 		self.pids[pid] = ProcessTracker(pid, name)
@@ -73,8 +73,8 @@ class GraphiteListener:
 
 def parse_options():
 	argparser = OptionParser()
-    argparser.add_option('-p', '--port', help='a port to listen', dest='port', default=6666)
-    return argparser.parse_args()
+	argparser.add_option('-p', '--port', help='a port to listen', dest='port', default=6666)
+	return argparser.parse_args()
 def main():
 	(opts, args) = parse_options()
 	tm = TrackerManager()
