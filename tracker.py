@@ -40,7 +40,11 @@ class TrackerManager:
 		self.listeners.append(listener)
 	def track(self, pid, name):
 		logging.info("Start tracking for %s/%s", pid, name)
-		self.pids[pid] = ProcessTracker(pid, name)
+		try:	
+			p = ProcessTracker(pid, name)
+			self.pids[pid] = p
+		except psutil.NoSuchProcess:
+			logging.exception("No such process")
 	def untrack(self, pid):
 		try:
 			logging.info("Stop tracking for %s/%s", pid, self.pids[pid].name)
