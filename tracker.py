@@ -55,14 +55,14 @@ class TrackerManager:
 		for listener in self.listeners:
 			listener.submit(results)
 
-class LoggerListener
+class LoggerListener:
 	def __init__(self, name):
 		self.logger = logging.getLogger(name)
 	def submit(self, results):
 		for metric in results.keys():
 			self.logger.info("%s\t%s\t%d" % (metric, results[metric], time.time()))
 
-class GraphiteListener
+class GraphiteListener:
 	def __init__(self, prefix, address, port):
 		self.logger = logging.getLogger("graphite")
 		self.prefix = prefix
