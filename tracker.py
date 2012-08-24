@@ -73,8 +73,7 @@ class GraphiteListener:
 
 def parse_options():
 	argparser = OptionParser()
-    argparser.add_option('-p', '--port', help='a port to listen', dest='port',
-                         default=6666)
+    argparser.add_option('-p', '--port', help='a port to listen', dest='port', default=6666)
     return argparser.parse_args()
 def main():
 	(opts, args) = parse_options()
