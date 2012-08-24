@@ -46,8 +46,8 @@ class TrackerManager:
 		except psutil.NoSuchProcess:
 			logging.exception("No such process")
 	def untrack(self, pid):
-		logging.info("Stop tracking for %s/%s", pid, self.pids[pid].name)
 		try:
+			logging.info("Stop tracking for %s/%s", pid, self.pids[pid].name)
 			del self.pids[pid]
 		except KeyError:
 			logging.warning("PID %s was not tracked" % pid)
