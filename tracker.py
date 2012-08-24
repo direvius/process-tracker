@@ -48,7 +48,7 @@ class TrackerManager:
 		except KeyError:
 			logging.warning("PID %s was not tracked" % pid)
 	def tracking_job(self):
-		logging.debug "Tracked pids: %s\n" % ' '.join(self.pids)
+		logging.debug("Tracked pids: %s\n" % ' '.join(self.pids))
 		for pid in self.pids.keys():
 			self.submit(self.pids[pid].collect())
 	def submit(self, results):
