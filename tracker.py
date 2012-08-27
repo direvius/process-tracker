@@ -72,10 +72,10 @@ class TrackerManager(object):
             logging.info("Stop tracking for %s/%s", pid, self.pids[pid].name)
             del self.pids[pid]
         except KeyError:
-            logging.warning("PID %s was not tracked" % pid)
+            logging.warning("PID %s was not tracked", pid)
     def tracking_job(self):
         '''a job that tracks for processes'''
-        logging.debug("Tracked pids: %s\n" % ' '.join(self.pids))
+        logging.debug("Tracked pids: %s\n", ' '.join(self.pids))
         for pid in self.pids.keys():
             self.submit(self.pids[pid].collect())
     def submit(self, results):
@@ -147,6 +147,6 @@ def main():
                     track <pid> <key> -- to start tracking pid\n\t\
                     untrack <pid> <key> -- to stop tracking pid\n' % req)
     conn.close()
-    
+
 if __name__ == "__main__":
     main()
