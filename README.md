@@ -11,6 +11,7 @@ Needs ```psutil``` and ```apscheduler``` python packages. Tested on python 2.5.2
 Usage: tracker.py [options]
 
 Options:
+```
   -h, --help            show this help message and exit
   -p PORT, --port=PORT  a port to listen
   -l, --log             enable logging metrics
@@ -25,3 +26,4 @@ Options:
   -P GRAPHITE_PREFIX, --graphite-prefix=GRAPHITE_PREFIX
                         graphite prefix
   -g, --use-graphite    report metrics to graphite
+```
