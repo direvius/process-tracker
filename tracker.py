@@ -32,19 +32,38 @@ class Collector(object):
         self.process = psutil.Process(int(pid))
         self.name = name
     def collect(self):
-        '''Returns process information as a dict of metrics'''
+        '''
+        Returns process information as a dict of metrics
+        Agregated (sum) with childs if any.
+        '''
+        results = [Collector.process_info(process) for process in self.process.get_children(True)]
+        results.append(Collector.process_info(self.process))
+        return Collector.sum_dicts(results)
+    @staticmethod
+    def sum_dicts(dicts):
+        '''sums dicts by key'''
+        return reduce(lambda a, b: dict( (key, a.get(key, 0)+b.get(key, 0)) for key in set(a)|set(b) ), dicts)
+    @staticmethod
+    def process_info(process):
+        '''Returns info for specific process as a dict of metrics'''
         results = {}
         try:
-            res_dict = self.process.as_dict()
-            #TODO: implement
+            res_dict = process.as_dict()
+            for key in Collector.KEYS:
+                if key in res_dict.keys():
+                    if type(res_dict[key]) in [float, int]:
+                        results[key] = res_dict[key]
+                    else:
+                        try:
+                            metrics = res_dict[key]._asdict()
+                        except AttributeError:
+                            pass
+                        for m_key in metrics.keys():
+                            results["%s.%s" % (key, m_key)] = metrics[m_key]
+                else:
+                    logging.warning("Metric %s not found", key)
         except psutil.NoSuchProcess:
             logging.exception("No such process")
-        return results
-    @staticmethod
-    def flatten(metric, prefix):
-        '''extracts metrics from an object other than float or int'''
-        #TODO: implement
-        results = {}
         return results
 
 class TrackerManager(object):
