@@ -10,6 +10,7 @@ import time
 import psutil
 import logging
 import socket
+import string 
 
 logging.basicConfig(level=logging.INFO,
                     format=\
@@ -68,11 +69,11 @@ class Collector(object):
 
 class TrackerManager(object):
     '''Manages process information collection for multiple processes'''
-    def __init__(self):
+    def __init__(self, interval):
         self.pids = {}
         self.listeners = []
         self.scheduler = Scheduler()
-        self.scheduler.add_interval_job(self.tracking_job, seconds=1)
+        self.scheduler.add_interval_job(self.tracking_job, seconds=interval)
         self.scheduler.start()
     def add_listener(self, listener):
         '''Add listener that will receive metrics'''
@@ -121,10 +122,12 @@ class GraphiteListener(object):
         self.prefix = prefix
     def submit(self, results):
         '''publish results to Graphite'''
-        # TODO make it send data to graphite
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sock.connect((self.address, int(self.port)))
         for metric in results.keys():
-            self.logger.info("%s\t%s\t%d" % \
-                (metric, results[metric], time.time()))
+            sock.sendall("%s.%s\t%s\t%d\n" % \
+                (self.prefix, metric, results[metric], time.time()))
+        sock.close()
 
 def parse_options():
     '''parse command line options'''
@@ -132,17 +135,45 @@ def parse_options():
     argparser.add_option('-p', '--port', 
                         help='a port to listen', 
                         dest='port', 
-                        default=6666
+                        default='6666'
                         )
+    argparser.add_option('-r', '--graphite-address', 
+                        help='graphite server address', 
+                        dest='graphite_address', 
+                        default='localhost'
+                        )
+    argparser.add_option('-R', '--graphite-port', 
+                        help='graphite server port', 
+                        dest='graphite_port', 
+                        default='2024'
+                        )
+    argparser.add_option('-i', '--interval', 
+                        help='collection interval in seconds', 
+                        dest='interval', 
+                        default='5'
+                        )
+    hostname = socket.gethostname().translate(string.maketrans(".", "_"))
+    argparser.add_option('-P', '--graphite-prefix', 
+                        help='graphite prefix', 
+                        dest='graphite_prefix', 
+                        default='five_sec.process_tracker.%s' % hostname
+                        )
+    argparser.add_option("-g", "--use-graphite",
+                  help="report metrics to graphite",
+                  action="store_true", 
+                  dest="graphite", 
+                  default=False)
     return argparser.parse_args()
 
 def main():
     '''main function'''
     opts, _ = parse_options()
-    t_m = TrackerManager()
+    t_m = TrackerManager(int(opts.interval))
     t_m.add_listener(LoggerListener("metrics"))
+    if opts.graphite:
+        t_m.add_listener(GraphiteListener(opts.graphite_prefix, opts.graphite_address, opts.graphite_port))
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    sock.bind(("0.0.0.0", opts.port))
+    sock.bind(("0.0.0.0", int(opts.port)))
     sock.listen(3)
     conn, _ = sock.accept()
     while 1:
