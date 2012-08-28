@@ -37,15 +37,14 @@ class Collector(object):
         Returns process information as a dict of metrics
         Agregated (sum) with childs if any.
         '''
-        results = [Collector.process_info(process) for process in self.process.get_children(True)]
-        results.append(Collector.process_info(self.process))
+        results = [self._process_info(process) for process in self.process.get_children(True)]
+        results.append(self._process_info(self.process))
         return Collector.sum_dicts(results)
     @staticmethod
     def sum_dicts(dicts):
         '''sums dicts by key'''
         return reduce(lambda a, b: dict( (key, a.get(key, 0)+b.get(key, 0)) for key in set(a)|set(b) ), dicts)
-    @staticmethod
-    def process_info(process):
+    def _process_info(self, process):
         '''Returns info for specific process as a dict of metrics'''
         results = {}
         try:
@@ -53,14 +52,14 @@ class Collector(object):
             for key in Collector.KEYS:
                 if key in res_dict.keys():
                     if type(res_dict[key]) in [float, int]:
-                        results[key] = res_dict[key]
+                        results["%s.%s" % (self.name, key)] = res_dict[key]
                     else:
                         try:
                             metrics = res_dict[key]._asdict()
                         except AttributeError:
                             pass
                         for m_key in metrics.keys():
-                            results["%s.%s" % (key, m_key)] = metrics[m_key]
+                            results["%s.%s.%s" % (self.name, key, m_key)] = metrics[m_key]
                 else:
                     logging.warning("Metric %s not found", key)
         except psutil.NoSuchProcess:
@@ -156,7 +155,7 @@ def parse_options():
     argparser.add_option('-P', '--graphite-prefix', 
                         help='graphite prefix', 
                         dest='graphite_prefix', 
-                        default='five_sec.process_tracker.%s' % hostname
+                        default='five_sec.process-tracker.%s' % hostname
                         )
     argparser.add_option("-g", "--use-graphite",
                   help="report metrics to graphite",
