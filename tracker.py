@@ -12,14 +12,6 @@ import logging
 import socket
 import string 
 
-logging.basicConfig(level=logging.INFO,
-                    format=\
-                    '%(asctime)s %(name)-12s %(levelname)-8s %(message)s',
-                    datefmt='%m-%d %H:%M',
-                    filename='stats.log',
-                    filemode='w'
-                    )
-
 class Collector(object):
     '''Collects process information by using psutil'''
     KEYS = ['num_ctx_switches', \
@@ -136,6 +128,17 @@ def parse_options():
                         dest='port', 
                         default='6666'
                         )
+    argparser.add_option('-l', '--log', 
+                        help='enable logging metrics',
+                        action='store_true', 
+                        dest='log_enabled', 
+                        default=False
+                        )
+    argparser.add_option('-L', '--log-file', 
+                        help='log file', 
+                        dest='logfile', 
+                        default='stats.log'
+                        )
     argparser.add_option('-r', '--graphite-address', 
                         help='graphite server address', 
                         dest='graphite_address', 
@@ -161,14 +164,23 @@ def parse_options():
                   help="report metrics to graphite",
                   action="store_true", 
                   dest="graphite", 
-                  default=False)
+                  default=False
+                  )
     return argparser.parse_args()
 
 def main():
     '''main function'''
     opts, _ = parse_options()
+    logging.basicConfig(level=logging.INFO,
+                format=\
+                '%(asctime)s %(name)-12s %(levelname)-8s %(message)s',
+                datefmt='%m-%d %H:%M',
+                filename=opts.logfile,
+                filemode='w'
+                )
     t_m = TrackerManager(int(opts.interval))
-    t_m.add_listener(LoggerListener("metrics"))
+    if(opts.log_enabled):
+        t_m.add_listener(LoggerListener("metrics"))
     if opts.graphite:
         t_m.add_listener(GraphiteListener(opts.graphite_prefix, opts.graphite_address, opts.graphite_port))
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
