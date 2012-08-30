@@ -11,6 +11,7 @@ import psutil
 import logging
 import socket
 import string 
+import daemon
 
 class Collector(object):
     '''Collects process information by using psutil'''
@@ -119,7 +120,6 @@ class GraphiteListener(object):
             sock.sendall("%s.%s\t%s\t%d\n" % \
                 (self.prefix, metric, results[metric], time.time()))
         sock.close()
-
 def parse_options():
     '''parse command line options'''
     argparser = OptionParser()
@@ -173,7 +173,6 @@ def parse_options():
                   default=False
                   )
     return argparser.parse_args()
-
 def main():
     '''main function'''
     opts, _ = parse_options()
@@ -219,4 +218,5 @@ def main():
     conn.close()
 
 if __name__ == "__main__":
-    main()
+    with daemon.DaemonContext():
+        main()
