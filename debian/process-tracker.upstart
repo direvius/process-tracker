@@ -1,0 +1,6 @@
+description "Process tracker daemon"
+author "Direvius"
+start on runlevel[234]
+stop on runlevel[0156]
+expect daemon
+exec /usr/bin/process-tracker
