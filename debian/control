@@ -1,0 +1,17 @@
+Source: process-tracker
+Section: misc
+Priority: extra
+Maintainer: Alexey Lavrenuke (load testing) <direvius@yandex-team.ru>
+Build-Depends: debhelper (>= 7)
+Standards-Version: 3.9.1
+Homepage: https://github.com/direvius/process-tracker/
+
+Package: process-tracker
+Architecture: all
+Depends: ${misc:Depends},${python:Depends}
+Description: extensible process tracking utility
+ process-tracker is an extensible process tracking utility.
+ Process resource usage is collected via '''psutil''' and 
+ reported to logfile and/or Graphite server 
+ (http://graphite.wikidot.com/). You can dynamically add or 
+ remove tracked processes. 
