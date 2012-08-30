@@ -173,6 +173,32 @@ def parse_options():
                   default=False
                   )
     return argparser.parse_args()
+def serve(conn):
+    while 1:
+        try:
+            data = conn.recv(4096)
+            if not data:
+                break
+            for line in data.splitlines():
+                req = line.rstrip('\r\n')
+                try:
+                    command, pid, name = req.split(' ')
+                    if command == 'track':
+                        t_m.track(pid, name)
+                        conn.sendall('OK %s\n' % req)
+                    elif command == 'untrack':
+                        t_m.untrack(pid)
+                        conn.sendall('OK %s\n' % req)
+                    else:
+                        conn.sendall('FAIL %s\n' % req)
+                except ValueError:
+                    conn.sendall('FAIL %s\n**USAGE:\n\t\
+                        track <pid> <key> -- to start tracking pid\n\t\
+                        untrack <pid> <key> -- to stop tracking pid\n' % req)
+        except (KeyboardInterrupt, SystemExit):
+            conn.close()
+            raise
+    conn.close()
 def main():
     '''main function'''
     opts, _ = parse_options()
@@ -194,29 +220,9 @@ def main():
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     sock.bind(("0.0.0.0", int(opts.port)))
     sock.listen(3)
-    conn, _ = sock.accept()
-    while 1:
-        data = conn.recv(4096)
-        if not data:
-            break
-        for line in data.splitlines():
-            req = line.rstrip('\r\n')
-            try:
-                command, pid, name = req.split(' ')
-                if command == 'track':
-                    t_m.track(pid, name)
-                    conn.sendall('OK %s\n' % req)
-                elif command == 'untrack':
-                    t_m.untrack(pid)
-                    conn.sendall('OK %s\n' % req)
-                else:
-                    conn.sendall('FAIL %s\n' % req)
-            except ValueError:
-                conn.sendall('FAIL %s\n**USAGE:\n\t\
-                    track <pid> <key> -- to start tracking pid\n\t\
-                    untrack <pid> <key> -- to stop tracking pid\n' % req)
-    conn.close()
-
+    while(1):
+        conn, _ = sock.accept()
+        serve(conn)
 if __name__ == "__main__":
     with daemon.DaemonContext(detach_process=True):
         main()
