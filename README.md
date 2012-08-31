@@ -2,11 +2,13 @@ process-tracker
 ===============
 
 Extensible process tracking utility. Process resource usage is collected via '''psutil''' and reported to logfile and/or Graphite server (http://graphite.wikidot.com/). Child processes resources are added to it's parent process (wich is tracked).
-Run, connect to TCP 6666 and send:
+Run as a service with initctl (upstart), connect to TCP 6666 and send:
 * ```track <pid> <key>``` to start tracking pid
 * ```untrack <pid> <key>``` to stop tracking pid
 
-Needs ```psutil``` and ```apscheduler``` python packages. Tested on python 2.5.2
+Upstart config is in ```/etc/init/process-tracker.conf```.
+
+Needs ```psutil```, ```python-daemon``` and ```apscheduler``` python packages. Don't forget to install them before running the service. Tested on python 2.5.2
 
 Usage: tracker.py [options]
 
@@ -26,4 +28,5 @@ Options:
   -P GRAPHITE_PREFIX, --graphite-prefix=GRAPHITE_PREFIX
                         graphite prefix
   -g, --use-graphite    report metrics to graphite
+  -v, --version         show version and exit
 ```
