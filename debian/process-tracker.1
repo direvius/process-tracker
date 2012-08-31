@@ -3,8 +3,31 @@
 .SH NAME
 process-tracker \- simple process tracker script
 .SH SYNOPSIS
-.B process-tracker
-[\fIoptions\fR]
+.B process-tracker 
+is an extensible process tracking utility. Process resource usage is collected via 
+.B psutil
+python module and reported to logfile and/or Graphite server (http://graphite.wikidot.com/). 
+Child processes resources are added to it's parent process (wich is tracked).
+Run as a service with initctl (upstart), connect to TCP 6666 and send:
+.TP
+\fBtrack <pid> <key>\fR
+to start tracking pid
+.TP
+\fBuntrack <pid> <key>\fR
+to stop tracking pid
+
+Upstart config is in 
+.B /etc/init/process-tracker.conf
+.
+
+Needs 
+.B psutil
+, 
+.B python-daemon
+and
+.B apscheduler
+python packages. Don't forget to install them before running the service. Tested on python 2.5.2
+
 .SH OPTIONS
 .TP
 \fB\-h\fR, \fB\-\-help\fR
