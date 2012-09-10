@@ -120,115 +120,121 @@ class GraphiteListener(object):
             sock.sendall("%s.%s\t%s\t%d\n" % \
                 (self.prefix, metric, results[metric], time.time()))
         sock.close()
-def parse_options():
-    '''parse command line options'''
-    argparser = OptionParser()
-    argparser.add_option('-p', '--port', 
-                        help='a port to listen', 
-                        dest='port', 
-                        default='6666'
-                        )
-    argparser.add_option('-l', '--log', 
-                        help='enable logging metrics',
-                        action='store_true', 
-                        dest='log_enabled', 
-                        default=False
-                        )
-    argparser.add_option('-L', '--log-file', 
-                        help='log file', 
-                        dest='logfile', 
-                        default='/var/log/process-tracker/process-tracker.log'
-                        )
-    argparser.add_option('-r', '--graphite-address', 
-                        help='graphite server address', 
-                        dest='graphite_address', 
-                        default='localhost'
-                        )
-    argparser.add_option('-R', '--graphite-port', 
-                        help='graphite server port', 
-                        dest='graphite_port', 
-                        default='2024'
-                        )
-    argparser.add_option('-i', '--interval', 
-                        help='collection interval in seconds', 
-                        dest='interval', 
-                        default='1'
-                        )
-    hostname = socket.gethostname().translate(string.maketrans(".", "_"))
-    argparser.add_option('-P', '--graphite-prefix', 
-                        help='graphite prefix', 
-                        dest='graphite_prefix', 
-                        default='one_sec.process-tracker.%s' % hostname
-                        )
-    argparser.add_option("-g", "--use-graphite",
-                  help="report metrics to graphite",
-                  action="store_true", 
-                  dest="graphite", 
-                  default=False
-                  )
-    argparser.add_option("-v", "--version",
-                  help="show version and exit",
-                  action="store_true",
-                  dest="version",
-                  default=False
-                  )
-    return argparser.parse_args()
-def serve(conn, t_m):
-    '''talk with client'''
-    while 1:
-        try:
-            data = conn.recv(4096)
-            if not data:
-                break
-            for line in data.splitlines():
-                req = line.rstrip('\r\n')
-                try:
-                    command, pid, name = req.split(' ')
-                    if command == 'track':
-                        t_m.track(pid, name)
-                        conn.sendall('OK %s\n' % req)
-                    elif command == 'untrack':
-                        t_m.untrack(pid)
-                        conn.sendall('OK %s\n' % req)
-                    else:
-                        conn.sendall('FAIL %s\n' % req)
-                except ValueError:
-                    conn.sendall('FAIL %s\n**USAGE:\n\t\
-                        track <pid> <key> -- to start tracking pid\n\t\
-                        untrack <pid> <key> -- to stop tracking pid\n' % req)
-        except (KeyboardInterrupt, SystemExit):
-            conn.close()
-            raise
-    conn.close()
-def main():
-    '''main function'''
-    opts, _ = parse_options()
-    if(opts.version):
-        print 'process-tracker-1.0'
-        return 0
-    logging.basicConfig(level=logging.INFO,
-                format=\
-                '%(asctime)s %(name)-12s %(levelname)-8s %(message)s',
-                datefmt='%m-%d %H:%M',
-                filename=opts.logfile,
-                filemode='w'
-                )
-    t_m = TrackerManager(int(opts.interval))
-    if(opts.log_enabled):
-        t_m.add_listener(LoggerListener("metrics"))
-    if opts.graphite:
-        t_m.add_listener(GraphiteListener(opts.graphite_prefix, opts.graphite_address, opts.graphite_port))
-    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    sock.bind(("0.0.0.0", int(opts.port)))
-    sock.listen(3)
-    while(1):
-        conn, _ = sock.accept()
-        serve(conn, t_m)
+class App:
+    '''Application class. Parse options and serve requests'''
+    def __init__(self):
+        self.opts = App._parse_options()
+        logging.basicConfig(level=logging.INFO,
+                    format=\
+                    '%(asctime)s %(name)-12s %(levelname)-8s %(message)s',
+                    datefmt='%m-%d %H:%M',
+                    filename=self.opts.logfile,
+                    filemode='w'
+                    )
+        self.t_m = TrackerManager(int(self.opts.interval))
+        if(self.opts.log_enabled):
+            self.t_m.add_listener(LoggerListener("metrics"))
+        if self.opts.graphite:
+            self.t_m.add_listener(GraphiteListener(self.opts.graphite_prefix, self.opts.graphite_address, self.opts.graphite_port))
+    @staticmethod
+    def _parse_options():
+        '''parse command line options'''
+        argparser = OptionParser()
+        argparser.add_option('-p', '--port', 
+                            help='a port to listen', 
+                            dest='port', 
+                            default='6666'
+                            )
+        argparser.add_option('-l', '--log', 
+                            help='enable logging metrics',
+                            action='store_true', 
+                            dest='log_enabled', 
+                            default=False
+                            )
+        argparser.add_option('-L', '--log-file', 
+                            help='log file', 
+                            dest='logfile', 
+                            default='/var/log/process-tracker/process-tracker.log'
+                            )
+        argparser.add_option('-r', '--graphite-address', 
+                            help='graphite server address', 
+                            dest='graphite_address', 
+                            default='localhost'
+                            )
+        argparser.add_option('-R', '--graphite-port', 
+                            help='graphite server port', 
+                            dest='graphite_port', 
+                            default='2024'
+                            )
+        argparser.add_option('-i', '--interval', 
+                            help='collection interval in seconds', 
+                            dest='interval', 
+                            default='1'
+                            )
+        hostname = socket.gethostname().translate(string.maketrans(".", "_"))
+        argparser.add_option('-P', '--graphite-prefix', 
+                            help='graphite prefix', 
+                            dest='graphite_prefix', 
+                            default='one_sec.process-tracker.%s' % hostname
+                            )
+        argparser.add_option("-g", "--use-graphite",
+                      help="report metrics to graphite",
+                      action="store_true", 
+                      dest="graphite", 
+                      default=False
+                      )
+        argparser.add_option("-v", "--version",
+                      help="show version and exit",
+                      action="store_true",
+                      dest="version",
+                      default=False
+                      )
+        return argparser.parse_args()[0]
+    def _serve(self, conn):
+        '''talk with client'''
+        while 1:
+            try:
+                data = conn.recv(4096)
+                if not data:
+                    break
+                for line in data.splitlines():
+                    req = line.rstrip('\r\n')
+                    try:
+                        command, pid, name = req.split(' ')
+                        if command == 'track':
+                            self.t_m.track(pid, name)
+                            conn.sendall('OK %s\n' % req)
+                        elif command == 'untrack':
+                            self.t_m.untrack(pid)
+                            conn.sendall('OK %s\n' % req)
+                        else:
+                            conn.sendall('FAIL %s\n' % req)
+                    except ValueError:
+                        conn.sendall('FAIL %s\n**USAGE:\n\t\
+                            track <pid> <key> -- to start tracking pid\n\t\
+                            untrack <pid> <key> -- to stop tracking pid\n' % req)
+            except (KeyboardInterrupt, SystemExit):
+                conn.close()
+                raise
+        conn.close()
+    def run(self):
+        '''main function'''
+        if(self.opts.version):
+            print 'process-tracker-1.0'
+            return 0
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sock.bind(("0.0.0.0", int(self.opts.port)))
+        sock.listen(3)
+        while(1):
+            conn, _ = sock.accept()
+            self._serve(conn)
+
 if __name__ == "__main__":
+    APP = App()
     CONTEXT = daemon.DaemonContext(detach_process=True)
     CONTEXT.open()
     try:
-        main()
+        APP.run()
     finally:
         CONTEXT.close()
 
