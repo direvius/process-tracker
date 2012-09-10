@@ -224,5 +224,10 @@ def main():
         conn, _ = sock.accept()
         serve(conn)
 if __name__ == "__main__":
-    with daemon.DaemonContext(detach_process=True):
+    context = daemon.DaemonContext(detach_process=True)
+    context.open()
+    try:
         main()
+    finally:
+        context.close()
+
