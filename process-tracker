@@ -218,9 +218,16 @@ class App:
         if(self.opts.version):
             print 'process-tracker-1.0'
             return 0
+        logging.basicConfig(level=logging.DEBUG,
+                format=\
+                '%(asctime)s %(name)-12s %(levelname)-8s %(message)s',
+                datefmt='%m-%d %H:%M',
+                filename=self.opts.logfile,
+                filemode='w'
+                )
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock.bind(("0.0.0.0", int(self.opts.port)))
-        sock.listen(3)
+        sock.listen(0)
         while 1:
             try:
                 logging.debug("Waiting for connection...")
