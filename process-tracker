@@ -125,13 +125,13 @@ class App:
     '''Application class. Parse options and serve requests'''
     def __init__(self):
         self.opts = App._parse_options()
-        logging.basicConfig(level=logging.DEBUG,
-                    format=\
-                    '%(asctime)s %(name)-12s %(levelname)-8s %(message)s',
-                    datefmt='%m-%d %H:%M',
-                    filename=self.opts.logfile,
-                    filemode='w'
-                    )
+        #logging.basicConfig(level=logging.DEBUG,
+        #            format=\
+        #            '%(asctime)s %(name)-12s %(levelname)-8s %(message)s',
+        #            datefmt='%m-%d %H:%M' #,
+                    #filename=self.opts.logfile,
+                    #filemode='w'
+        #            )
         self.t_m = TrackerManager(int(self.opts.interval))
         if(self.opts.log_enabled):
             self.t_m.add_listener(LoggerListener("metrics"))
@@ -218,19 +218,13 @@ class App:
         if(self.opts.version):
             print 'process-tracker-1.0'
             return 0
-        logging.basicConfig(level=logging.DEBUG,
-                format=\
-                '%(asctime)s %(name)-12s %(levelname)-8s %(message)s',
-                datefmt='%m-%d %H:%M',
-                filename=self.opts.logfile,
-                filemode='w'
-                )
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock.bind(("0.0.0.0", int(self.opts.port)))
         sock.listen(0)
         while 1:
             try:
                 logging.debug("Waiting for connection...")
+                print "Waiting for connection"
                 conn, _ = sock.accept()
                 logging.debug("Got a connection, gonna serve it...")
                 self._serve(conn)
@@ -245,6 +239,13 @@ if __name__ == "__main__":
     APP = App()
     CONTEXT = daemon.DaemonContext(detach_process=True, pidfile = lockfile.pidlockfile.PIDLockFile("/var/run/process-tracker.pid"))
     CONTEXT.open()
+    logging.basicConfig(level=logging.DEBUG,
+                    format=\
+                    '%(asctime)s %(name)-12s %(levelname)-8s %(message)s',
+                    datefmt='%m-%d %H:%M',
+                    #filename='./pt.log',#self.opts.logfile,
+                    #filemode='w'
+                    )
     try:
         APP.run()
     finally:
