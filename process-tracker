@@ -12,6 +12,7 @@ import logging
 import socket
 import string 
 import daemon
+import lockfile.pidlockfile
 
 class Collector(object):
     '''Collects process information by using psutil'''
@@ -214,9 +215,7 @@ class App:
                             track <pid> <key> -- to start tracking pid\n\t\
                             untrack <pid> <key> -- to stop tracking pid\n' % req)
             except (KeyboardInterrupt, SystemExit):
-                conn.close()
                 raise
-        conn.close()
     def run(self):
         '''main function'''
         if(self.opts.version):
@@ -226,15 +225,19 @@ class App:
         sock.bind(("0.0.0.0", int(self.opts.port)))
         sock.listen(3)
         while(1):
-            conn, _ = sock.accept()
-            self._serve(conn)
+            try:
+                conn, _ = sock.accept()
+                self._serve(conn)
+            except:
+                break
+            finally:
+                conn.close()
 
 if __name__ == "__main__":
     APP = App()
-    CONTEXT = daemon.DaemonContext(detach_process=True)
+    CONTEXT = daemon.DaemonContext(detach_process=True, pidfile = lockfile.pidlockfile.PIDLockFile("/var/run/process-tracker.pid"))
     CONTEXT.open()
     try:
         APP.run()
     finally:
         CONTEXT.close()
-
