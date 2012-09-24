@@ -1,3 +1,9 @@
+process-tracker (1.2) unstable; urgency=low
+
+  * Made daemonized script work with logging
+
+ -- Alexey Lavrenuke (load testing) <direvius@yandex-team.ru>  Mon, 24 Sep 2012 17:09:02 +0400
+
 process-tracker (1.1hardy0) hardy; urgency=low
 
   * Init script for hardy 
