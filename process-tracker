@@ -10,9 +10,10 @@ import time
 import psutil
 import logging
 import socket
-import string 
+import string
 import daemon
 import lockfile.pidlockfile
+
 
 class Collector(object):
     '''Collects process information by using psutil'''
@@ -25,9 +26,11 @@ class Collector(object):
             'num_threads', \
             'memory_percent', \
             'ext_memory_info']
+
     def __init__(self, pid, name):
         self.process = psutil.Process(int(pid))
         self.name = name
+
     def collect(self):
         '''
         Returns process information as a dict of metrics
@@ -36,10 +39,12 @@ class Collector(object):
         results = [self._process_info(process) for process in self.process.get_children(True)]
         results.append(self._process_info(self.process))
         return Collector.sum_dicts(results)
+
     @staticmethod
     def sum_dicts(dicts):
         '''sums dicts by key'''
         return reduce(lambda a, b: dict( (key, a.get(key, 0)+b.get(key, 0)) for key in set(a)|set(b) ), dicts)
+
     def _process_info(self, process):
         '''Returns info for specific process as a dict of metrics'''
         results = {}
@@ -62,26 +67,31 @@ class Collector(object):
             Collector.LOG.exception("No such process")
         return results
 
+
 class TrackerManager(object):
     '''Manages process information collection for multiple processes'''
     LOG = logging.getLogger('pt.tracker_manager')
+
     def __init__(self, interval):
         self.pids = {}
         self.listeners = []
         self.scheduler = Scheduler()
         self.scheduler.add_interval_job(self.tracking_job, seconds=interval)
         self.scheduler.start()
+
     def add_listener(self, listener):
         '''Add listener that will receive metrics'''
         self.listeners.append(listener)
+
     def track(self, pid, name):
         '''Start tracking for process, with selected metric sub-name'''
         TrackerManager.LOG.info("Start tracking for %s/%s", pid, name)
-        try:    
+        try:
             process = Collector(pid, name)
             self.pids[pid] = process
         except psutil.NoSuchProcess:
             TrackerManager.LOG.exception("No such process")
+
     def untrack(self, pid):
         '''Stop tracking process (PID == pid)'''
         try:
@@ -89,32 +99,41 @@ class TrackerManager(object):
             del self.pids[pid]
         except KeyError:
             TrackerManager.LOG.warning("PID %s was not tracked", pid)
+
     def tracking_job(self):
         '''a job that tracks for processes'''
         TrackerManager.LOG.debug("Tracked pids: %s\n", ' '.join(self.pids))
         for pid in self.pids.keys():
             self.submit(self.pids[pid].collect())
+
     def submit(self, results):
         '''publish results to listeners'''
         for listener in self.listeners:
             listener.submit(results)
 
+
 class LoggerListener(object):
     '''Listener that writes metrics to log'''
     def __init__(self, name):
         self.logger = logging.getLogger("pt.trace.%s" % name)
+
     def submit(self, results):
         '''publish results to log'''
         for metric in results.keys():
             self.logger.info("%s\t%s\t%d" % \
                 (metric, results[metric], time.time()))
 
+
 class GraphiteListener(object):
     '''Listener that writes metrics to Graphite'''
+    LOG = logging.getLogger('pt.graphite_listener')
+
     def __init__(self, prefix, address, port):
         self.address = address
         self.port = port
         self.prefix = prefix
+        GraphiteListener.LOG.debug("Added a Graphite listener with address = '%s', port = '%s', prefix = '%s'")
+
     def submit(self, results):
         '''publish results to Graphite'''
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -123,6 +142,9 @@ class GraphiteListener(object):
             sock.sendall("%s.%s\t%s\t%d\n" % \
                 (self.prefix, metric, results[metric], time.time()))
         sock.close()
+        GraphiteListener.LOG.debug("Sent metrics to server")
+
+
 class App:
     '''Application class. Parse options and serve requests'''
     def __init__(self, opts):
@@ -139,6 +161,7 @@ class App:
             self.t_m.add_listener(LoggerListener("metrics"))
         if self.opts.graphite:
             self.t_m.add_listener(GraphiteListener(self.opts.graphite_prefix, self.opts.graphite_address, self.opts.graphite_port))
+
     def _serve(self, conn):
         '''talk with client'''
         while 1:
@@ -161,6 +184,7 @@ class App:
                     conn.sendall('FAIL %s\n**USAGE:\n\t\
                         track <pid> <key> -- to start tracking pid\n\t\
                         untrack <pid> <key> -- to stop tracking pid\n' % req)
+
     def run(self):
         '''main function'''
         if(self.opts.version):
@@ -183,50 +207,51 @@ class App:
                 self.logger.debug("Closing managing connection")
                 conn.close()
 
+
 def parse_options():
     '''parse command line options'''
     argparser = OptionParser()
-    argparser.add_option('-p', '--port', 
-                        help='a port to listen', 
-                        dest='port', 
+    argparser.add_option('-p', '--port',
+                        help='a port to listen',
+                        dest='port',
                         default='6666'
                         )
-    argparser.add_option('-l', '--log', 
+    argparser.add_option('-l', '--log',
                         help='enable logging metrics',
-                        action='store_true', 
-                        dest='log_enabled', 
+                        action='store_true',
+                        dest='log_enabled',
                         default=False
                         )
-    argparser.add_option('-L', '--log-file', 
-                        help='log file', 
-                        dest='logfile', 
+    argparser.add_option('-L', '--log-file',
+                        help='log file',
+                        dest='logfile',
                         default='/var/log/process-tracker/process-tracker.log'
                         )
-    argparser.add_option('-r', '--graphite-address', 
-                        help='graphite server address', 
-                        dest='graphite_address', 
+    argparser.add_option('-r', '--graphite-address',
+                        help='graphite server address',
+                        dest='graphite_address',
                         default='localhost'
                         )
-    argparser.add_option('-R', '--graphite-port', 
-                        help='graphite server port', 
-                        dest='graphite_port', 
+    argparser.add_option('-R', '--graphite-port',
+                        help='graphite server port',
+                        dest='graphite_port',
                         default='2024'
                         )
-    argparser.add_option('-i', '--interval', 
-                        help='collection interval in seconds', 
-                        dest='interval', 
+    argparser.add_option('-i', '--interval',
+                        help='collection interval in seconds',
+                        dest='interval',
                         default='1'
                         )
     hostname = socket.gethostname().translate(string.maketrans(".", "_"))
-    argparser.add_option('-P', '--graphite-prefix', 
-                        help='graphite prefix', 
-                        dest='graphite_prefix', 
+    argparser.add_option('-P', '--graphite-prefix',
+                        help='graphite prefix',
+                        dest='graphite_prefix',
                         default='one_sec.process-tracker.%s' % hostname
                         )
     argparser.add_option("-g", "--use-graphite",
                   help="report metrics to graphite",
-                  action="store_true", 
-                  dest="graphite", 
+                  action="store_true",
+                  dest="graphite",
                   default=False
                   )
     argparser.add_option("-v", "--version",
@@ -238,9 +263,8 @@ def parse_options():
     return argparser.parse_args()[0]
 if __name__ == "__main__":
     opts = parse_options()
-    CONTEXT = daemon.DaemonContext(detach_process=True, pidfile = lockfile.pidlockfile.PIDLockFile("/var/run/process-tracker.pid"))
+    CONTEXT = daemon.DaemonContext(detach_process = True, pidfile = lockfile.pidlockfile.PIDLockFile("/var/run/process-tracker.pid"))
     CONTEXT.open()
-
     APP = App(opts)
     try:
         APP.run()
