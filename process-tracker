@@ -132,7 +132,7 @@ class GraphiteListener(object):
         self.address = address
         self.port = port
         self.prefix = prefix
-        GraphiteListener.LOG.debug("Added a Graphite listener with address = '%s', port = '%s', prefix = '%s'")
+        GraphiteListener.LOG.debug("Created a Graphite listener with address = '%s', port = '%s', prefix = '%s'" % (address, port, prefix))
 
     def submit(self, results):
         '''publish results to Graphite'''
