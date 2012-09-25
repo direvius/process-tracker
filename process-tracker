@@ -36,9 +36,15 @@ class Collector(object):
         Returns process information as a dict of metrics
         Agregated (sum) with childs if any.
         '''
-        results = [self._process_info(process) for process in self.process.get_children(True)]
-        results.append(self._process_info(self.process))
-        return Collector.sum_dicts(results)
+        try:
+            Collector.LOG.debug("Collecting info for %s" % self.name)
+            results = [self._process_info(process) for process in self.process.get_children(True)]
+            results.append(self._process_info(self.process))
+            Collector.LOG.debug("Collected %d results for %s" % (len(results), self.name))
+            res = Collector.sum_dicts(results)
+        except:
+            Collector.LOG.exception("Failed to collect metrics")
+        return res
 
     @staticmethod
     def sum_dicts(dicts):
@@ -47,6 +53,7 @@ class Collector(object):
 
     def _process_info(self, process):
         '''Returns info for specific process as a dict of metrics'''
+        Collector.LOG.debug("Collecting metrics for %s" % process)
         results = {}
         try:
             res_dict = process.as_dict()
@@ -65,6 +72,8 @@ class Collector(object):
                     Collector.LOG.warning("Metric %s not found", key)
         except psutil.NoSuchProcess:
             Collector.LOG.exception("No such process")
+        except:
+            Collector.LOG.exception("Error occured while collecting metrics")
         return results
 
 
@@ -104,6 +113,7 @@ class TrackerManager(object):
         '''a job that tracks for processes'''
         TrackerManager.LOG.debug("Tracked pids: %s\n", ' '.join(self.pids))
         for pid in self.pids.keys():
+            TrackerManager.LOG.debug("Submitting info for %s", pid)
             self.submit(self.pids[pid].collect())
 
     def submit(self, results):
@@ -136,13 +146,17 @@ class GraphiteListener(object):
 
     def submit(self, results):
         '''publish results to Graphite'''
-        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        sock.connect((self.address, int(self.port)))
-        for metric in results.keys():
-            sock.sendall("%s.%s\t%s\t%d\n" % \
-                (self.prefix, metric, results[metric], time.time()))
-        sock.close()
-        GraphiteListener.LOG.debug("Sent metrics to server")
+        GraphiteListener.LOG.debug("Trying to send metrics to server...")
+        try:
+            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            sock.connect((self.address, int(self.port)))
+            for metric in results.keys():
+                sock.sendall("%s.%s\t%s\t%d\n" % \
+                    (self.prefix, metric, results[metric], time.time()))
+            sock.close()
+            GraphiteListener.LOG.debug("Sent metrics to server")
+        except:
+            GraphiteListener.LOG.exception("Failed to send metrics")
 
 
 class App:
@@ -151,6 +165,7 @@ class App:
         self.opts = opts
         self.logger = logging.getLogger('pt')
         self.logger.setLevel(logging.DEBUG)
+        #fh = logging.StreamHandler()
         fh = logging.FileHandler(self.opts.logfile)
         fh.setLevel(logging.DEBUG)
         formatter = logging.Formatter('%(asctime)s %(name)-12s %(levelname)-8s %(message)s')
