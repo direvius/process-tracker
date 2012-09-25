@@ -158,8 +158,10 @@ class App:
         self.logger.addHandler(fh)
         self.t_m = TrackerManager(int(self.opts.interval))
         if(self.opts.log_enabled):
+            self.logger.info("Adding logger listener")
             self.t_m.add_listener(LoggerListener("metrics"))
         if self.opts.graphite:
+            self.logger.info("Adding graphite listener")
             self.t_m.add_listener(GraphiteListener(self.opts.graphite_prefix, self.opts.graphite_address, self.opts.graphite_port))
 
     def _serve(self, conn):
@@ -196,7 +198,6 @@ class App:
         while 1:
             try:
                 self.logger.debug("Waiting for connection...")
-                print "Waiting for connection"
                 conn, _ = sock.accept()
                 self.logger.debug("Got a connection, gonna serve it...")
                 self._serve(conn)
