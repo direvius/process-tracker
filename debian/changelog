@@ -1,3 +1,9 @@
+process-tracker (1.4) unstable; urgency=low
+
+  * Add apscheduler dependency
+
+ -- Alexey Lavrenuke (load testing) <direvius@yandex-team.ru>  Tue, 02 Oct 2012 17:28:48 +0400
+
 process-tracker (1.3) unstable; urgency=low
 
   * Depends for python modules
