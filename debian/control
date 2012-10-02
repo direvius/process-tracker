@@ -8,7 +8,7 @@ Homepage: https://github.com/direvius/process-tracker/
 
 Package: process-tracker
 Architecture: all
-Depends: ${misc:Depends},${python:Depends}
+Depends: ${misc:Depends},${python:Depends},python-daemon,python-psutil(>=0.6.1),python-lockfile
 Description: extensible process tracking utility
  process-tracker is an extensible process tracking utility.
  Process resource usage is collected via '''psutil''' and 
