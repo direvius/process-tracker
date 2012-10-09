@@ -16,17 +16,7 @@ to start tracking pid
 \fBuntrack <pid> <key>\fR
 to stop tracking pid
 
-Upstart config is in 
-.B /etc/init/process-tracker.conf
 .
-
-Needs 
-.B psutil
-, 
-.B python-daemon
-and
-.B apscheduler
-python packages. Don't forget to install them before running the service. Tested on python 2.5.2
 
 .SH OPTIONS
 .TP
@@ -43,7 +33,7 @@ enable logging metrics
 log file
 .TP
 \fB\-r\fR GRAPHITE_ADDRESS, \fB\-\-graphite\-address\fR=\fIGRAPHITE_ADDRESS\fR
-graphite server address
+graphite server addresses, separated by commas
 .TP
 \fB\-R\fR GRAPHITE_PORT, \fB\-\-graphite\-port\fR=\fIGRAPHITE_PORT\fR
 graphite server port
