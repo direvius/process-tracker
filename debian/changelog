@@ -1,3 +1,9 @@
+process-tracker (1.5) unstable; urgency=low
+
+  * Multiple graphite servers
+
+ -- Alexey Lavrenuke (load testing) <direvius@yandex-team.ru>  Tue, 09 Oct 2012 13:39:16 +0400
+
 process-tracker (1.4) unstable; urgency=low
 
   * Add apscheduler dependency
