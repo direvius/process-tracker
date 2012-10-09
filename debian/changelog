@@ -1,3 +1,9 @@
+process-tracker (1.6) unstable; urgency=low
+
+  * Non-blocking send to graphite server (threaded)
+
+ -- Alexey Lavrenuke (load testing) <direvius@yandex-team.ru>  Tue, 09 Oct 2012 23:52:11 +0400
+
 process-tracker (1.5) unstable; urgency=low
 
   * Multiple graphite servers
