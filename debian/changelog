@@ -1,3 +1,9 @@
+process-tracker (1.6.1) unstable; urgency=low
+
+  * Version for python-pidlockfile dependency 
+
+ -- Alexey Lavrenuke (load testing) <direvius@yandex-team.ru>  Fri, 12 Oct 2012 15:26:13 +0400
+
 process-tracker (1.6) unstable; urgency=low
 
   * Non-blocking send to graphite server (threaded)
