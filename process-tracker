@@ -169,11 +169,15 @@ class App(object):
     '''Application class. Parse options and serve requests'''
     def __init__(self, opts):
         self.opts = opts
+        if self.opts.verbose:
+            log_level = logging.DEBUG
+        else:
+            log_level = logging.INFO
         self.logger = logging.getLogger('pt')
-        self.logger.setLevel(logging.DEBUG)
+        self.logger.setLevel(log_level)
         #fh = logging.StreamHandler()
         fh = logging.FileHandler(self.opts.logfile)
-        fh.setLevel(logging.DEBUG)
+        fh.setLevel(log_level)
         formatter = logging.Formatter('%(asctime)s %(name)-12s %(levelname)-8s %(message)s')
         fh.setFormatter(formatter)
         self.logger.addHandler(fh)
@@ -212,7 +216,7 @@ class App(object):
     def run(self):
         '''main function'''
         if(self.opts.version):
-            print 'process-tracker-1.0'
+            print 'process-tracker-1.6'
             return 0
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock.bind(("0.0.0.0", int(self.opts.port)))
@@ -281,6 +285,12 @@ def parse_options():
                   help="show version and exit",
                   action="store_true",
                   dest="version",
+                  default=False
+                  )
+    argparser.add_option("-V", "--verbose",
+                  help="set log level to DEBUG",
+                  action="store_true",
+                  dest="verbose",
                   default=False
                   )
     return argparser.parse_args()[0]
