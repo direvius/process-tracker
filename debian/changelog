@@ -1,3 +1,9 @@
+process-tracker (1.6.2) testing; urgency=low
+
+  * Stop tracking dead processes
+
+ -- Alexey Lavrenuke (load testing) <direvius@yandex-team.ru>  Fri, 19 Oct 2012 01:24:23 +0400
+
 process-tracker (1.6.1) unstable; urgency=low
 
   * Version for python-pidlockfile dependency 
