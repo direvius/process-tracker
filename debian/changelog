@@ -1,8 +1,9 @@
 process-tracker (1.6.1) unstable; urgency=low
 
   * Version for python-pidlockfile dependency 
+  * Verbosity level command line option
 
- -- Alexey Lavrenuke (load testing) <direvius@yandex-team.ru>  Fri, 12 Oct 2012 15:26:13 +0400
+ -- Alexey Lavrenuke (load testing) <direvius@yandex-team.ru>  Fri, 12 Oct 2012 16:05:16 +0400
 
 process-tracker (1.6) unstable; urgency=low
 
