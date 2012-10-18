@@ -114,7 +114,7 @@ class TrackerManager(object):
         '''a job that tracks for processes'''
         TrackerManager.LOG.debug("Tracked pids: %s\n", ' '.join(self.pids))
         for pid in self.pids.keys():
-            if psutil.pid_exists(pid):
+            if psutil.pid_exists(int(pid)):
                 TrackerManager.LOG.debug("Submitting info for %s", pid)
                 self.submit(self.pids[pid].collect())
             else:
