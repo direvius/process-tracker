@@ -113,13 +113,16 @@ class TrackerManager(object):
     def tracking_job(self):
         '''a job that tracks for processes'''
         TrackerManager.LOG.debug("Tracked pids: %s\n", ' '.join(self.pids))
+        results = {}
         for pid in self.pids.keys():
             if psutil.pid_exists(int(pid)):
-                TrackerManager.LOG.debug("Submitting info for %s", pid)
-                self.submit(self.pids[pid].collect())
+                TrackerManager.LOG.debug("Adding info for %s", pid)
+                results.update(self.pids[pid].collect())
             else:
                 TrackerManager.LOG.info("Process with PID %s not exist anymore. Stop tracking it...", pid)
                 self.untrack(pid)
+        TrackerManager.LOG.debug("Submitting results")
+        self.submit(results)
 
     def submit(self, results):
         '''publish results to listeners'''
