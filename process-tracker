@@ -160,9 +160,9 @@ class GraphiteListener(object):
             for metric in results.keys():
                 sock.sendall("%s.%s\t%s\t%d\n" % \
                     (self.prefix, metric, results[metric], time.time()))
-            GraphiteListener.LOG.debug("Sent metrics to server")
+            GraphiteListener.LOG.debug("Sent metrics to %s:%s", (self.address, self.port))
         except:
-            GraphiteListener.LOG.exception("Failed to send metrics")
+            GraphiteListener.LOG.exception("Failed to send metrics to %s:%s", (self.address, self.port))
         finally:
             sock.close()
 
