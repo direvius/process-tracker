@@ -54,7 +54,7 @@ class Collector(object):
 
     def _process_info(self, process):
         '''Returns info for specific process as a dict of metrics'''
-        Collector.LOG.debug("Collecting metrics for %s" % process)
+        Collector.LOG.debug("Collecting metrics for %s" % process.pid)
         results = {}
         try:
             res_dict = process.as_dict()
@@ -121,7 +121,7 @@ class TrackerManager(object):
             else:
                 TrackerManager.LOG.info("Process with PID %s not exist anymore. Stop tracking it...", pid)
                 self.untrack(pid)
-        TrackerManager.LOG.debug("Submitting results")
+        TrackerManager.LOG.debug("Submitting %d results", len(results))
         self.submit(results)
 
     def submit(self, results):
