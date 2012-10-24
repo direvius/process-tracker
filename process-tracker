@@ -121,8 +121,11 @@ class TrackerManager(object):
             else:
                 TrackerManager.LOG.info("Process with PID %s not exist anymore. Stop tracking it...", pid)
                 self.untrack(pid)
-        TrackerManager.LOG.debug("Submitting %d results", len(results))
-        self.submit(results)
+        if len(results) > 0:
+            TrackerManager.LOG.debug("Submitting %d results", len(results))
+            self.submit(results)
+        else:
+            TrackerManager.LOG.debug("Nothing to submit")
 
     def submit(self, results):
         '''publish results to listeners'''
