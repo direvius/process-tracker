@@ -237,6 +237,8 @@ class App(object):
             except(SystemExit, KeyboardInterrupt):
                 self.logger.info("Exiting, because interrupted.")
                 break
+            except:
+                self.logger.exception("Unkown error in manage server loop")
             finally:
                 self.logger.debug("Closing managing connection")
                 conn.close()
