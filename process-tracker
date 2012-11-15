@@ -165,13 +165,13 @@ class GraphiteListener(object):
                 sock.sendall("%s.%s\t%s\t%d\n" % (self.prefix, metric, results[metric], timestamp))
             GraphiteListener.LOG.debug("Sent metrics to %s:%s.", (self.address, self.port))
         except:
-            GraphiteListener.LOG.exception("Failed to send metrics to %s:%s.", (self.address, self.port))
+            GraphiteListener.LOG.exception("Failed to send metrics to %s:%s.", self.address, self.port)
         finally:
             sock.close()
 
     def submit(self, results, timestamp):
         '''publish results to Graphite'''
-        GraphiteListener.LOG.debug("Trying to send metrics to %s:%s...", (self.address, self.port))
+        GraphiteListener.LOG.debug("Trying to send metrics to %s:%s...", self.address, self.port)
         Thread(target=self._submit_task, args=(results, timestamp)).start()
 
 
