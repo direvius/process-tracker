@@ -82,9 +82,11 @@ class TrackerManager(object):
     '''Manages process information collection for multiple processes'''
     LOG = logging.getLogger('pt.tracker_manager')
 
-    def __init__(self, interval):
+    def __init__(self, interval, delta):
+        TrackerManager.LOG.debug("Initializing TrackerManager with interval = %s and delta = %s", interval, delta)
         self.pids = {}
         self.listeners = []
+        self.delta = delta
         self.scheduler = Scheduler()
         self.scheduler.add_interval_job(self.tracking_job, seconds=interval)
         self.scheduler.start()
@@ -124,7 +126,7 @@ class TrackerManager(object):
     def submit(self, results):
         '''publish results to listeners'''
         for listener in self.listeners:
-            listener.submit(results)
+            listener.submit(results, time.time()+self.delta)
 
 
 class LoggerListener(object):
@@ -132,11 +134,11 @@ class LoggerListener(object):
     def __init__(self, name):
         self.logger = logging.getLogger("pt.trace.%s" % name)
 
-    def submit(self, results):
+    def submit(self, results, timestamp):
         '''publish results to log'''
         for metric in results.keys():
             self.logger.info("%s\t%s\t%d" % \
-                (metric, results[metric], time.time()))
+                (metric, results[metric], timestamp))
 
 
 class GraphiteListener(object):
@@ -149,24 +151,24 @@ class GraphiteListener(object):
         self.prefix = prefix
         GraphiteListener.LOG.debug("Created a Graphite listener with address = '%s', port = '%s', prefix = '%s'" % (address, port, prefix))
 
-    def _submit_task(self, results):
+    def _submit_task(self, results, timestamp):
         '''result submit task for threaded submitter'''
         try:
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             sock.connect((self.address, int(self.port)))
             for metric in results.keys():
                 sock.sendall("%s.%s\t%s\t%d\n" % \
-                    (self.prefix, metric, results[metric], time.time()))
+                    (self.prefix, metric, results[metric], timestamp))
             GraphiteListener.LOG.debug("Sent metrics to server")
         except:
             GraphiteListener.LOG.exception("Failed to send metrics")
         finally:
             sock.close()
 
-    def submit(self, results):
+    def submit(self, results, timestamp):
         '''publish results to Graphite'''
         GraphiteListener.LOG.debug("Trying to send metrics to server...")
-        Thread(target=self._submit_task, args=(results,)).start()
+        Thread(target=self._submit_task, args=(results, timestamp)).start()
 
 
 class App(object):
@@ -185,7 +187,7 @@ class App(object):
         formatter = logging.Formatter('%(asctime)s %(name)-12s %(levelname)-8s %(message)s')
         fh.setFormatter(formatter)
         self.logger.addHandler(fh)
-        self.t_m = TrackerManager(int(self.opts.interval))
+        self.t_m = TrackerManager(int(self.opts.interval), int(self.opts.delta))
         if(self.opts.log_enabled):
             self.logger.info("Adding logger listener")
             self.t_m.add_listener(LoggerListener("metrics"))
@@ -273,6 +275,11 @@ def parse_options():
                         dest='interval',
                         default='1'
                         )
+    argparser.add_option('-d', '--delta',
+                        help='time delta to add to each timestamp (ms)',
+                        dest='delta',
+                        default='0'
+                        )
     hostname = socket.gethostname().translate(string.maketrans(".", "_"))
     argparser.add_option('-P', '--graphite-prefix',
                         help='graphite prefix',
@@ -297,13 +304,22 @@ def parse_options():
                   dest="verbose",
                   default=False
                   )
+    argparser.add_option("-I", "--interactive",
+                  help="do not detach from console",
+                  action="store_true",
+                  dest="interactive",
+                  default=False
+                  )
     return argparser.parse_args()[0]
 if __name__ == "__main__":
     OPTIONS = parse_options()
-    CONTEXT = daemon.DaemonContext(detach_process = True, pidfile = lockfile.pidlockfile.PIDLockFile("/var/run/process-tracker.pid"))
-    CONTEXT.open()
-    APP = App(OPTIONS)
-    try:
-        APP.run()
-    finally:
-        CONTEXT.close()
+    if OPTIONS.interactive:
+        App(OPTIONS).run()
+    else:
+        CONTEXT = daemon.DaemonContext(detach_process = True, pidfile = lockfile.pidlockfile.PIDLockFile("/var/run/process-tracker.pid"))
+        CONTEXT.open()
+        APP = App(OPTIONS)
+        try:
+            APP.run()
+        finally:
+            CONTEXT.close()
