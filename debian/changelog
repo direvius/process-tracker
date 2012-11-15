@@ -1,3 +1,11 @@
+process-tracker (1.7) testing; urgency=low
+
+  * interactive option (don't detach from console if enabled)
+  * sum results for metrics with same names
+  * delta option: add it to each timestamp (may be less then zero)
+
+ -- Alexey Lavrenuke (load testing) <direvius@yandex-team.ru>  Thu, 15 Nov 2012 15:14:58 +0300
+
 process-tracker (1.6.4) testing; urgency=low
 
   * Merge all tracked processes info into one submit
