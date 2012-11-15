@@ -54,7 +54,7 @@ class Collector(object):
 
     def _process_info(self, process):
         '''Returns info for specific process as a dict of metrics'''
-        Collector.LOG.debug("Collecting metrics for %s" % process)
+        Collector.LOG.debug("Collecting metrics for %s" % process.pid)
         results = {}
         try:
             res_dict = process.as_dict()
@@ -115,13 +115,19 @@ class TrackerManager(object):
     def tracking_job(self):
         '''a job that tracks for processes'''
         TrackerManager.LOG.debug("Tracked pids: %s\n", ' '.join(self.pids))
+        results = {}
         for pid in self.pids.keys():
             if psutil.pid_exists(int(pid)):
-                TrackerManager.LOG.debug("Submitting info for %s", pid)
-                self.submit(self.pids[pid].collect())
+                TrackerManager.LOG.debug("Adding info for %s", pid)
+                results.update(self.pids[pid].collect())
             else:
                 TrackerManager.LOG.info("Process with PID %s not exist anymore. Stop tracking it...", pid)
                 self.untrack(pid)
+        if len(results) > 0:
+            TrackerManager.LOG.debug("Submitting %d results", len(results))
+            self.submit(results)
+        else:
+            TrackerManager.LOG.debug("Nothing to submit")
 
     def submit(self, results):
         '''publish results to listeners'''
@@ -137,8 +143,7 @@ class LoggerListener(object):
     def submit(self, results, timestamp):
         '''publish results to log'''
         for metric in results.keys():
-            self.logger.info("%s\t%s\t%d" % \
-                (metric, results[metric], timestamp))
+            self.logger.info("%s\t%s\t%d" % (metric, results[metric], timestamp))
 
 
 class GraphiteListener(object):
@@ -157,17 +162,16 @@ class GraphiteListener(object):
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             sock.connect((self.address, int(self.port)))
             for metric in results.keys():
-                sock.sendall("%s.%s\t%s\t%d\n" % \
-                    (self.prefix, metric, results[metric], timestamp))
-            GraphiteListener.LOG.debug("Sent metrics to server")
+                sock.sendall("%s.%s\t%s\t%d\n" % (self.prefix, metric, results[metric], timestamp))
+            GraphiteListener.LOG.debug("Sent metrics to %s:%s.", (self.address, self.port))
         except:
-            GraphiteListener.LOG.exception("Failed to send metrics")
+            GraphiteListener.LOG.exception("Failed to send metrics to %s:%s.", (self.address, self.port))
         finally:
             sock.close()
 
     def submit(self, results, timestamp):
         '''publish results to Graphite'''
-        GraphiteListener.LOG.debug("Trying to send metrics to server...")
+        GraphiteListener.LOG.debug("Trying to send metrics to %s:%s...", (self.address, self.port))
         Thread(target=self._submit_task, args=(results, timestamp)).start()
 
 
@@ -236,6 +240,8 @@ class App(object):
             except(SystemExit, KeyboardInterrupt):
                 self.logger.info("Exiting, because interrupted.")
                 break
+            except:
+                self.logger.exception("Unkown error in manage server loop")
             finally:
                 self.logger.debug("Closing managing connection")
                 conn.close()

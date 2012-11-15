@@ -1,3 +1,11 @@
+process-tracker (1.6.4) testing; urgency=low
+
+  * Merge all tracked processes info into one submit
+  * Better logging
+  * Handle unknown exceptions in manager loop
+
+ -- Alexey Lavrenuke (load testing) <direvius@yandex-team.ru>  Wed, 24 Oct 2012 14:16:45 +0400
+
 process-tracker (1.6.3) testing; urgency=low
 
   * Fix bug in check process exist
